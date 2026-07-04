@@ -1,10 +1,10 @@
-# The Stonehenge Altar Stone: Screening the Orcadian Basin
+# Altar Stone Orcadian Basin Geochemical Screen
 
 ![License: CC BY 4.0](https://img.shields.io/badge/License-CC%20BY%204.0-lightgrey.svg)
 
 Open-data geochemical screen for candidate source areas of Stonehenge's Altar Stone within the Orcadian Basin, northeast Scotland. Companion code and data to:
 
-> Daw, T. (2026). *The Stonehenge Altar Stone: Screening the Orcadian Basin. A Multi-Element Geochemical Screen, Verified Against Bedrock Geology, for the Source of the Stonehenge Altar Stone Within the Orcadian Basin.* Preprint. [www.sarsen.org](https://www.sarsen.org)
+> Daw, T. (2026). *The Stonehenge Altar Stone: Screening the Orcadian Basin — A Multi-Element Geochemical Screen, Verified Against Bedrock Geology, for the Source of the Stonehenge Altar Stone Within the Orcadian Basin.* Preprint. [www.sarsen.org](https://www.sarsen.org)
 
 ## Background
 
@@ -12,21 +12,17 @@ The Altar Stone — the six-tonne sandstone megalith at the centre of Stonehenge
 
 This repository screens the whole basin using two free datasets — BGS stream-sediment barium and rubidium grids, and BGS's digital bedrock geology map — to rank locations for field follow-up. The method combines the Altar Stone's published barium signature with a Ba/Rb ratio threshold (more robust to sampling noise than either element alone), then verifies every resulting geochemical anomaly, pixel by pixel, against real mapped bedrock rather than relying on hand-drawn geographic boundaries.
 
-The standout result is a 42.5 km² area of the East Caithness coast near Sarclet — 98.2% confirmed genuine Middle Old Red Sandstone — which independently converges with a peer-reviewed detrital zircon geochronology study (Clarke et al. 2026) that separately identified the same locality as its strongest statistical match to the Altar Stone (p = 0.96), using entirely unrelated data and methods. The same screen, rerun with no basin restriction over the whole UK (Appendix C; see below), reproduces this result unchanged and independently re-derives the Orcadian Basin as the search area. Full reasoning, caveats, and the negative results this screen also produced are in the paper.
+The standout result is a 42.5 km² area of the East Caithness coast near Sarclet — 98.2% confirmed genuine Middle Old Red Sandstone — which independently converges with a peer-reviewed detrital zircon geochronology study (Clarke et al. 2026) that separately identified the same locality as its strongest statistical match to the Altar Stone (p = 0.96), using entirely unrelated data and methods. Full reasoning, caveats, and the negative results this screen also produced are in the paper.
 
 ## What's in this repository
 
 | File | Contents |
 |---|---|
-| `screen_altar_stone_source.py` | The full pipeline: load grids, compute Ba/Rb ratio, threshold, cluster, verify against bedrock, export results. Single documented script. Runs against whatever `STUDY_BOX` is set to — see "Changing the study extent" below. |
+| `screen_altar_stone_source.py` | The full pipeline: load grids, compute Ba/Rb ratio, threshold, cluster, verify against bedrock, export results. Single documented script. |
 | `requirements.txt` | Python dependencies. |
-| `outputs/per_cell_results.csv` | Basin run (Section 2 of the paper). Every individual 500 m grid cell passing the composite screen within the Orcadian Basin study extent (3,545 rows), with coordinates, Ba, Rb, ratio, and matched bedrock formation/age/lithology. |
-| `outputs/per_cluster_results.csv` | Basin run. One row per cluster (45 rows): area, centroid, mean Ba/Rb/ratio, and percentage of the cluster confirmed as genuine Old Red Sandstone. |
-| `outputs/uk_per_cell.csv` | **New.** Whole-UK run (Appendix C), no study box. Every grid cell passing the composite screen nationally (31,756 rows), same columns as the basin file. |
-| `outputs/uk_per_cluster.csv` | **New.** Whole-UK run. One row per cluster (300 rows), same columns as the basin file. |
+| `outputs/per_cell_results.csv` | Every individual 500 m grid cell passing the composite screen (3,545 rows), with coordinates, Ba, Rb, ratio, and matched bedrock formation/age/lithology. |
+| `outputs/per_cluster_results.csv` | One row per cluster (45 rows): area, centroid, mean Ba/Rb/ratio, and percentage of the cluster confirmed as genuine Old Red Sandstone. |
 | `data/` | Empty — see below for what to download and place here. |
-
-**Note on cluster IDs:** the basin run and the UK run are independent executions of the same script over different extents, and `cluster_id` numbering is assigned fresh each time — it is not a shared index. The Sarclet cluster is `cluster_id 18` in `per_cluster_results.csv` (basin run) and `cluster_id 15` in `uk_per_cluster.csv` (UK run). Match clusters between the two files by coordinates, not by ID.
 
 ## Getting the source data
 
@@ -47,8 +43,6 @@ data/
   BGS_Geology_625k_Shapefile/Bedrock/625k_V5_BEDROCK_Geology_Polygons.shp   (+ .dbf/.shx/.prj)
 ```
 
-Note: these grids cover the whole UK, including Northern Ireland (Tellus survey coverage) — relevant if you rerun the whole-UK screen described below, since the main paper's basin extent is Great Britain-only.
-
 ## Running it
 
 ```bash
@@ -62,22 +56,14 @@ Takes a few minutes — the per-cell bedrock spatial join is the slow step. On c
 
 Edit `STUDY_BOX` near the top of the script. The ratio threshold is recalculated from the data within whatever extent you set on every run — it is not a hardcoded constant — so results will shift if the box changes. See Sections 2.6 and 4.3 of the paper for why the default rectangle is a stated pragmatic choice rather than a geological boundary, and for a better alternative (a dissolved outline of real Devonian polygons) not yet implemented here.
 
-## Appendix C: the whole-UK run
-
-Appendix C of the paper reports the identical screen run with `STUDY_BOX` removed entirely, covering the whole UK grid, as a direct test of whether the basin-restricted result in Section 2 was an artefact of the chosen extent. It wasn't: the East Caithness (Sarclet) and Shetland clusters emerge unchanged under a national P95 threshold (14.098) that is if anything slightly stricter than the basin one. Every other genuine-Old-Red-Sandstone signal the national run turns up is accounted for by published exclusions (Anglo-Welsh Basin, Midland Valley, marine Devonian of SW England) or is untested rather than confirmed (Shetland; the Fintona Group, Northern Ireland), with the map and full reasoning given in the appendix. `outputs/uk_per_cell.csv` and `outputs/uk_per_cluster.csv` are the raw outputs of this run.
-
-## A correction worth knowing about
-
-An earlier draft of the paper cited incorrect cell statistics for the Sarclet cluster, sourced from a separate independent replication (by Grok/xAI, reproduced in the paper's Appendix B) that had matched the wrong cluster to that location — its sandbox lacked the GIS libraries to run the bedrock verification step itself, so it identified a candidate by rough geography rather than a confirmed spatial join. Running this script end-to-end is what caught it. The verified figures for the Sarclet cluster (`cluster_id 18` in `outputs/per_cluster_results.csv`) are: 170 cells, 42.5 km², 98.2% genuine Middle Old Red Sandstone, mean Ba 1453 ppm, mean ratio 18.2. Full account in Appendix B of the paper.
-
 ## Citation
 
 If you use this code or data, please cite:
 
 ```
-Daw, T. (2026). The Stonehenge Altar Stone: Screening the Orcadian Basin. A Multi-Element
-Geochemical Screen, Verified Against Bedrock Geology, for the Source of the Stonehenge
-Altar Stone Within the Orcadian Basin. Preprint.
+Daw, T. (2026). The Stonehenge Altar Stone: Screening the Orcadian Basin — A
+Multi-Element Geochemical Screen, Verified Against Bedrock Geology, for the Source
+of the Stonehenge Altar Stone Within the Orcadian Basin. Preprint.
 ```
 
 ## License
